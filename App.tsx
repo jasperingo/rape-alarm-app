@@ -1,17 +1,18 @@
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, NavigatorScreenParams  } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { COLOR_PRIMARY, COLOR_TEXT_INVERSE, DIMENSION_XL } from './assets/styles/config';
-import HomeScreen from './screens/HomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import { useFonts } from 'expo-font';
 import SplashScreen from './screens/SplashScreen';
 import RegisterScreen from './screens/RegisterScreen';
+import TabScreen, { TabParamList } from './screens/TabScreen';
+import AlertScreen from './screens/AlertScreen';
 
 const Stack = createNativeStackNavigator();
 
 const screenOptions: NativeStackNavigationOptions = {
-  headerTitle: 'Rape Alert',
+  title: 'Rape Alert',
   headerStyle: {
     backgroundColor: COLOR_PRIMARY,
   },
@@ -21,6 +22,13 @@ const screenOptions: NativeStackNavigationOptions = {
     fontFamily: 'AkayaTelivigala-Regular',
   },
   headerTitleAlign: 'center',
+};
+
+export type RootStackParamList = {
+  SignIn: undefined;
+  SignUp: undefined;
+  Alert: { id: string };
+  Main: NavigatorScreenParams<TabParamList>;
 };
 
 export default function App() {
@@ -37,9 +45,10 @@ export default function App() {
     <SafeAreaProvider>
       <NavigationContainer>
         <Stack.Navigator screenOptions={screenOptions}>
-          <Stack.Screen name="Login" component={LoginScreen} options={{ title: 'Rape Alert' }} />
-          <Stack.Screen name="Sign_up" component={RegisterScreen} options={{ title: 'Rape Alert' }} />
-          <Stack.Screen name="HomeScreen" component={HomeScreen} />
+          <Stack.Screen name="Main" component={TabScreen}  />
+          <Stack.Screen name="SignIn" component={LoginScreen} />
+          <Stack.Screen name="SignUp" component={RegisterScreen} />
+          <Stack.Screen name="Alert" component={AlertScreen} />
         </Stack.Navigator>
       </NavigationContainer>
     </SafeAreaProvider>

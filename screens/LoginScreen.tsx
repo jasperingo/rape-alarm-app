@@ -1,36 +1,34 @@
 
 import React, { useEffect, useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
 import NetInfo from "@react-native-community/netinfo";
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import validator from 'validator';
 import { DIMENSION_MD } from '../assets/styles/config';
 import AppButton from '../components/AppButton';
 import AppTextInput from '../components/AppTextInput';
-import { useUserSignIn } from '../hooks/userHook';
+import { useUser, useUserSignIn } from '../hooks/userHook';
 import SignIntoSignUp from '../components/SignIntoSignUp';
 import { useNavigation } from '@react-navigation/native';
-
-declare global {   
-  namespace ReactNavigation {
-    interface RootParamList {
-      Sign_up: undefined;
-    }   
-  } 
- } 
+import { RootStackParamList } from '../App';
+import { useErrorMessage } from '../hooks/errorHook';
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
     alignContent: 'center',
+    justifyContent: 'center',
     paddingHorizontal: DIMENSION_MD,
-    fontFamily: 'AkayaTelivigala-Regular'
   }
 });
 
 const LoginScreen = () => {
 
-  const navigation = useNavigation();
+  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'SignIn'>>();
+
+  const user = useUser();
+
+  const errorMessage = useErrorMessage();
 
   const [email, setEmail] = useState('');
 
@@ -38,7 +36,7 @@ const LoginScreen = () => {
 
   const [onSubmit, success, loading, error, resetStatus] = useUserSignIn();
 
-  const onFormSubmit = async () => {
+  const onFormSubmit = () => {
 
     if (!validator.isEmail(email) || !validator.isLength(password, { min: 4 })) {
       alert('Credentials incorrect');
@@ -55,13 +53,11 @@ const LoginScreen = () => {
 
   useEffect(
     ()=> {
-      if (success) {
-        alert('Signed in');
-      }  
+      if (success)
+        navigation.replace('Main', { screen: 'Home' });
 
-      if (error !== null) {
-        alert(`Error: ${error}`);
-      }
+      if (error !== null)
+        alert(errorMessage(error));
 
       resetStatus();
     },
@@ -79,7 +75,6 @@ const LoginScreen = () => {
           label="Email" 
           value={email} 
           disabled={loading}
-          error={null}
           keyboardType="email-address"
           onChangeText={setEmail} 
           />
@@ -87,7 +82,6 @@ const LoginScreen = () => {
         <AppTextInput 
           label="Password" 
           value={password} 
-          error={null}
           disabled={loading}
           passwordInput={true}
           onChangeText={setPassword} 
@@ -95,7 +89,7 @@ const LoginScreen = () => {
 
         <AppButton text="Sign in" loading={loading} onPress={onFormSubmit} />
 
-        <SignIntoSignUp onPress={()=> navigation.navigate('Sign_up')} />       
+        <SignIntoSignUp type='signup' onPress={()=> navigation.navigate('SignUp')} />       
 
       </View>
     </KeyboardAvoidingView>

@@ -31,13 +31,13 @@ interface Props {
   label: string;
   value: string;
   disabled: boolean;
-  error: string | null;
+  error?: string;
   passwordInput?: boolean;
   keyboardType?: KeyboardTypeOptions; 
   onChangeText: (value: string)=> void
 }
 
-const AppTextInput = ({ label, value, error, disabled, keyboardType = 'default', passwordInput = false, onChangeText }: Props) => {
+const AppTextInput = ({ label, value, error = '', disabled, keyboardType = 'default', passwordInput = false, onChangeText }: Props) => {
   return (
     <View style={styles.container}>
       <Text style={styles.text}>{ label }</Text>
@@ -47,7 +47,7 @@ const AppTextInput = ({ label, value, error, disabled, keyboardType = 'default',
         keyboardType={keyboardType}
         secureTextEntry={passwordInput}
         onChangeText={(text)=> onChangeText(text)}
-        style={[styles.input, error !== null ? { borderColor: COLOR_ERROR } : null]} 
+        style={[styles.input, error !== '' ? { borderColor: COLOR_ERROR } : null]} 
         />
       <Text style={styles.error}>{ error }</Text>
     </View>

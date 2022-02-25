@@ -29,3 +29,7 @@ export const DIMENSION_LG = 20;
 
 export const DIMENSION_XL = 24;
 
+export const DIMENSION_XXL = 28;
+
+export const DIMENSION_XXXL = 32;
+

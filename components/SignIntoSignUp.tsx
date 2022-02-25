@@ -15,18 +15,25 @@ const styles = StyleSheet.create({
 });
 
 interface Props {
-  onPress: ()=> void
+  type: 'signin' | 'signup';
+  onPress: ()=> void;
 }
 
-const SignIntoSignUp = ({ onPress }: Props) => {
+const SignIntoSignUp = ({ type, onPress }: Props) => {
   return (
     <View style={styles.container}>
-      <Text>Don't have an account? </Text>
+      <Text>
+        { type === 'signup' && 'Don\'t have an account? ' } 
+        { type === 'signin' && 'Already have an account? ' } 
+      </Text>
       <TouchableOpacity activeOpacity={0.8} onPress={onPress}>
-        <Text style={styles.button}>Sign up.</Text>
+        <Text style={styles.button}>
+          { type === 'signup' && 'Sign up.' }
+          { type === 'signin' && 'Sign in.' }
+        </Text>
       </TouchableOpacity>
     </View>
-  )
+  );
 }
 
 export default SignIntoSignUp;
