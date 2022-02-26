@@ -5,5 +5,6 @@ export default interface Alert {
   date: string;
   longitude: number;
   latitude: number;
+  address: string;
   status: 'Active' | 'Inactive'
 }

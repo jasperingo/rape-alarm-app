@@ -7,7 +7,7 @@ import validator from 'validator';
 import { DIMENSION_MD } from '../assets/styles/config';
 import AppButton from '../components/AppButton';
 import AppTextInput from '../components/AppTextInput';
-import { useUser, useUserSignIn } from '../hooks/userHook';
+import { useUserSignIn } from '../hooks/userHook';
 import SignIntoSignUp from '../components/SignIntoSignUp';
 import { useNavigation } from '@react-navigation/native';
 import { RootStackParamList } from '../App';
@@ -25,8 +25,6 @@ const styles = StyleSheet.create({
 const LoginScreen = () => {
 
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'SignIn'>>();
-
-  const user = useUser();
 
   const errorMessage = useErrorMessage();
 
@@ -61,7 +59,7 @@ const LoginScreen = () => {
 
       resetStatus();
     },
-    [success, error]
+    [success, error, errorMessage, navigation, resetStatus]
   );
   
   return (

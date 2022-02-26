@@ -52,20 +52,25 @@ const SendScreen = () => {
 
       resetStatus();
     },
-    [success, error]
+    [success, error, resetStatus, errorMessage]
   );
   
   const sendAlert = async ()=> {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') {
-      alert('Permission to access location was denied');
-    } else {
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      onSubmit(latitude, longitude);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+      } else {
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+        const [{ city, country, region, subregion }] = await Location.reverseGeocodeAsync({ latitude, longitude });
+        onSubmit(`${city}, ${subregion}, ${region}, ${country}`, longitude, latitude);
+      }
+    } catch {
+      alert('Alert not sent, try again.');
     }
   }
-
+  
   return (
     <View style={styles.container}>
       <TouchableOpacity 

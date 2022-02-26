@@ -1,12 +1,12 @@
 {
   "expo": {
-    "name": "rape-alert-app",
+    "name": "Rape Alert",
     "slug": "rape-alert-app",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/app-icon.png",
     "splash": {
-      "image": "./assets/splash.png",
+      "image": "./assets/app-splash.png",
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

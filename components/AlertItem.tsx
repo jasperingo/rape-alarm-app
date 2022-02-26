@@ -21,6 +21,7 @@ const styles = StyleSheet.create({
 
   location: {
     fontWeight: FONT_BOLD,
+    fontSize: DIMENSION_MD,
     marginBottom: DIMENSION_XXS
   },
 
@@ -42,11 +43,11 @@ const styles = StyleSheet.create({
   }
 });
 
-const AlertItem = ({ alert: { date, status, latitude, longitude }, onPress }: { alert: Alert, onPress: ()=> void }) => {
+const AlertItem = ({ alert: { date, status, address }, onPress }: { alert: Alert, onPress: ()=> void }) => {
   return (
     <View style={styles.container}>
       <TouchableOpacity activeOpacity={0.5} onPress={onPress}>
-        <Text style={styles.location}>Latitude: {latitude} - Longitude: {longitude}</Text>
+        <Text style={styles.location}>{ address }</Text>
         <Text style={styles.date}>{ date }</Text>
         <View style={styles.status}>
           <Ionicons 

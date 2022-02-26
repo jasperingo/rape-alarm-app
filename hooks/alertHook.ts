@@ -8,8 +8,9 @@ import { AlertRepository } from "../repositories/AlertRepository";
 import app from "../repositories/firebase";
 import { ParamList } from "../screens/AlertScreen";
 
+
 type CreateReturnTuple = [
-  (latitude: number, longitude: number)=> Promise<void>,
+  (address: string, latitude: number, longitude: number)=> Promise<void>,
   boolean,
   boolean,
   string | null,
@@ -36,13 +37,14 @@ export const useAlertCreate = (): CreateReturnTuple => {
     []
   );
 
-  const onSubmit = async (longitude: number, latitude: number) => {
+  const onSubmit = async (address: string, longitude: number, latitude: number) => {
 
     setLoading(true);
 
     try {
       if (auth.currentUser !== null) {
         await api.create({
+          address,
           latitude,
           longitude,
           status: 'Active',
@@ -64,6 +66,59 @@ export const useAlertCreate = (): CreateReturnTuple => {
 
   return [onSubmit, success, loading, error, resetStatus];
 }
+
+
+type UpdateReturnTuple = [
+  (alert: Alert)=> Promise<void>,
+  boolean,
+  boolean,
+  string | null,
+  ()=> void
+];
+
+export const useAlertUpdateStatus = (): UpdateReturnTuple => {
+
+  const [loading, setLoading] = useState(false);
+
+  const [success, setSuccess] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const api = useMemo(()=> new AlertRepository(), []);
+
+  const auth = useMemo(()=> getAuth(app), []);
+
+  const resetStatus = useCallback(
+    ()=> {
+      setError(null);
+      setSuccess(false)
+    },
+    []
+  );
+
+  const onSubmit = async (alert: Alert) => {
+
+    setLoading(true);
+
+    try {
+      if (auth.currentUser !== null) {
+        alert.status = 'Inactive';
+        await api.updateStatus(alert);
+        setSuccess(true);
+      }
+    } catch (error) {
+      if (error instanceof FirebaseError)
+        setError(error.code);
+      else 
+        setError(UNKNOWN_ERROR);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  return [onSubmit, success, loading, error, resetStatus];
+}
+
 
 type ListFetchReturnType = [
   Alert[], 
@@ -109,10 +164,8 @@ export const useAlertListFetch = (): ListFetchReturnType => {
       setRefreshing(true);
       setLoading(true); 
     }, 
-    [ended]
+    []
   );
-  
-  const onError = (error: string)=> setError(error);
   
   useEffect(
     () => {
@@ -140,18 +193,20 @@ export const useAlertListFetch = (): ListFetchReturnType => {
 
       if (loading && !ended) fetch();
     },
-    [loading, ended, page]
+    [loading, ended, page, api]
   );
   
-  return [list, loading, refreshing, error, canLoad, onError, onRefresh];
+  return [list, loading, refreshing, error, canLoad, setError, onRefresh];
 }
+
 
 type FetchReturnType = [
   Alert | null, 
   boolean, 
   string | null, 
   () => void,
-  (error: string)=> void
+  (error: string)=> void,
+  () => void
 ];
 
 export const useAlertFetch = (): FetchReturnType => {
@@ -176,7 +231,12 @@ export const useAlertFetch = (): FetchReturnType => {
     []
   );
 
-  const onError = (error: string)=> setError(error);
+  const onStatusUpdate = useCallback(
+    ()=> {
+      setAlert(old=> old !== null ? ({ ...old, status: 'Inactive' }) : null);
+    },
+    []
+  );
   
   useEffect(
     () => {
@@ -199,10 +259,8 @@ export const useAlertFetch = (): FetchReturnType => {
 
       if (loading) fetch();
     },
-    [loading, route.params.id]
+    [loading, route.params.id, api, auth.currentUser]
   );
 
-  return [alert, loading, error, canLoad, onError];
+  return [alert, loading, error, canLoad, setError, onStatusUpdate];
 }
-
-

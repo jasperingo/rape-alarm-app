@@ -70,7 +70,7 @@ const ProfileScreen = () => {
 
   const userAuth = useUser() as User;
 
-  const [user, loading, error, canLoad, onError] = useUserFetch(userAuth.uid);
+  const [user, loading, error, canLoad, onError] = useUserFetch(userAuth?.uid);
 
   useEffect(
     ()=> {
@@ -86,7 +86,7 @@ const ProfileScreen = () => {
 
       resetStatus();
     },
-    [signOutSuccess, signOutError]
+    [signOutSuccess, signOutError, navigation, resetStatus, errorMessage]
   );
   
   useEffect(
@@ -99,7 +99,7 @@ const ProfileScreen = () => {
         }
       });
     },
-    []
+    [canLoad, onError]
   );
   
   return (

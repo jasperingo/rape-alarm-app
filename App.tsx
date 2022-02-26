@@ -1,3 +1,4 @@
+import React from 'react';
 import { NavigationContainer, NavigatorScreenParams  } from '@react-navigation/native';
 import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
@@ -27,13 +28,14 @@ const screenOptions: NativeStackNavigationOptions = {
 export type RootStackParamList = {
   SignIn: undefined;
   SignUp: undefined;
+  Test: undefined;
   Alert: { id: string };
   Main: NavigatorScreenParams<TabParamList>;
 };
 
 export default function App() {
 
-  let [fontsLoaded] = useFonts({
+  const [fontsLoaded] = useFonts({
     'AkayaTelivigala-Regular': require('./assets/fonts/AbrilFatface-Regular.ttf'),
   });
 

@@ -174,8 +174,6 @@ export const useUserFetch = (id: string | null): FetchReturnType => {
     }, 
     []
   );
-
-  const onError = (error: string)=> setError(error);
   
   useEffect(
     () => {
@@ -198,9 +196,9 @@ export const useUserFetch = (id: string | null): FetchReturnType => {
 
       if (loading) fetch();
     },
-    [loading]
+    [loading, api, id]
   );
 
-  return [user, loading, error, canLoad, onError];
+  return [user, loading, error, canLoad, setError];
 }
 

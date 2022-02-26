@@ -14,6 +14,7 @@ import { useUser } from '../hooks/userHook';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
+import LoadingEmpty from '../components/LoadingEmpty';
 
 const styles = StyleSheet.create({
   container: {
@@ -53,7 +54,7 @@ const HomeScreen = () => {
         });
       }
     },
-    []
+    [user, onError, canLoad]
   );
   
   return (
@@ -63,7 +64,10 @@ const HomeScreen = () => {
         onRefresh={onRefresh}
         refreshing={refreshing}
         renderItem={({ item })=> (
-          <AlertItem alert={item} onPress={()=> navigation.navigate('Alert', { id: item.id as string })} />
+          <AlertItem 
+            alert={item} 
+            onPress={()=> navigation.navigate('Alert', { id: item.id as string })} 
+            />
         )}
         keyExtractor={(item)=> String(item.id)}
         onEndReached={canLoad}
@@ -76,6 +80,10 @@ const HomeScreen = () => {
             canRender: error !== null,
             render: ()=> <LoadingError error={errorMessage(error)} onReloadPress={canLoad} />
           },
+          {
+            canRender: !loading &&  error === null && list.length === 0,
+            render: ()=> <LoadingEmpty text='No alert found' />
+          }
         ])}
         />
     </View>

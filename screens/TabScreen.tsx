@@ -10,6 +10,8 @@ import { useUser } from '../hooks/userHook';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../App';
+import { AlertRepository } from '../repositories/AlertRepository';
+import { useNotification } from '../hooks/notificationHook';
 
 const Tab = createBottomTabNavigator();
 
@@ -27,11 +29,21 @@ const TabScreen = () => {
 
   const navigation = useNavigation<NavigationOnTabProp>();
 
+  const sendNotification = useNotification();
+
   useEffect(
     ()=> {
-      if (user === null) navigation.replace('SignIn');
+      if (user === null) 
+        navigation.replace('SignIn');
+      else {
+        const unsubscribe = (new AlertRepository()).getNew((alert)=> {
+          sendNotification(alert);
+        });
+
+        return unsubscribe;
+      }
     },
-    []
+    [navigation, user, sendNotification]
   );
   
   return (
@@ -40,7 +52,7 @@ const TabScreen = () => {
         name="Home" 
         component={HomeScreen} 
         options={{ 
-          tabBarIcon: ({ focused, color, size })=> <Ionicons name='home' color={color} size={size} />,
+          tabBarIcon: ({ color, size })=> <Ionicons name='home' color={color} size={size} />,
           tabBarActiveTintColor: COLOR_PRIMARY 
         }} 
         />
@@ -49,7 +61,7 @@ const TabScreen = () => {
         name="Send" 
         component={SendScreen} 
         options={{ 
-          tabBarIcon: ({ focused, color, size })=> <Ionicons name='megaphone' color={color} size={size} />,
+          tabBarIcon: ({ color, size })=> <Ionicons name='megaphone' color={color} size={size} />,
           tabBarActiveTintColor: COLOR_PRIMARY 
         }}
         />
@@ -58,7 +70,7 @@ const TabScreen = () => {
         name="Profile" 
         component={ProfileScreen} 
         options={{ 
-          tabBarIcon: ({ focused, color, size })=> <Ionicons name='person' color={color} size={size} />,
+          tabBarIcon: ({ color, size })=> <Ionicons name='person' color={color} size={size} />,
           tabBarActiveTintColor: COLOR_PRIMARY 
         }}
         />
