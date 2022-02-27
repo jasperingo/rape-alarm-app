@@ -63,17 +63,17 @@ const RegisterScreen = () => {
       if (success)
         navigation.reset({
           index: 0,
-          routes: [{ name: 'Main' }],
+          routes: [{ name: 'Main' }]
         });
       
-      if (error !== null)
+      if (error !== null) {
         alert(errorMessage(error));
-
-      resetStatus();
+        resetStatus();
+      }
     },
-    [success, error]
+    [success, error, navigation, errorMessage, resetStatus]
   );
-
+  
   return (
     <KeyboardAvoidingView 
       style={styles.container}

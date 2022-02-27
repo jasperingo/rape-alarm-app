@@ -78,28 +78,30 @@ const ProfileScreen = () => {
       if (signOutSuccess)
         navigation.reset({
           index: 0,
-          routes: [{ name: 'Main' }]
+          routes: [{ name: 'SignIn' }]
         });
 
-      if (signOutError !== null)
+      if (signOutError !== null) {
         alert(errorMessage(signOutError));
-
-      resetStatus();
+        resetStatus();
+      }
     },
     [signOutSuccess, signOutError, navigation, resetStatus, errorMessage]
   );
   
   useEffect(
     ()=> {
-      NetInfo.fetch().then(state => {
-        if (!state.isConnected) {
-          onError(NO_INTERNET_CONNECTION);
-        } else {
-          canLoad();
-        }
-      });
+      if (userAuth !== null) {
+        NetInfo.fetch().then(state => {
+          if (!state.isConnected) {
+            onError(NO_INTERNET_CONNECTION);
+          } else {
+            canLoad();
+          }
+        });
+      }
     },
-    [canLoad, onError]
+    [userAuth, canLoad, onError]
   );
   
   return (

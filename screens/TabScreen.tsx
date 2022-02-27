@@ -33,9 +33,8 @@ const TabScreen = () => {
 
   useEffect(
     ()=> {
-      if (user === null) 
-        navigation.replace('SignIn');
-      else {
+      if (user !== null) {
+        
         const unsubscribe = (new AlertRepository()).getNew((alert)=> {
           if (alert.userId !== user.uid)
             sendNotification(alert);

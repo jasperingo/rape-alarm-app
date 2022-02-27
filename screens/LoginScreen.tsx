@@ -54,10 +54,10 @@ const LoginScreen = () => {
       if (success)
         navigation.replace('Main', { screen: 'Home' });
 
-      if (error !== null)
+      if (error !== null) {
         alert(errorMessage(error));
-
-      resetStatus();
+        resetStatus();
+      }
     },
     [success, error, errorMessage, navigation, resetStatus]
   );

@@ -5,6 +5,7 @@ import Ionicons from 'react-native-vector-icons/Ionicons';
 import { 
   COLOR_SURFACE, 
   DIMENSION_MD, 
+  DIMENSION_SM, 
   DIMENSION_XS, 
   DIMENSION_XXS, 
   FONT_BOLD 
@@ -13,7 +14,7 @@ import Alert from '../models/Alert';
 
 const styles = StyleSheet.create({
   container: {
-    marginBottom: DIMENSION_MD,
+    margin: DIMENSION_SM,
     backgroundColor: COLOR_SURFACE,
     padding: DIMENSION_XS,
     borderRadius: DIMENSION_XS

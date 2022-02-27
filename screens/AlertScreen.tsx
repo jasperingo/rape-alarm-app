@@ -1,6 +1,6 @@
 
 import React, { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import NetInfo from "@react-native-community/netinfo";
 import { useAlertFetch } from '../hooks/alertHook';
 import LoadingError from '../components/LoadingError';
@@ -47,26 +47,26 @@ const AlertScreen = () => {
   );
 
   return (
-    <View style={styles.container}>
+    <ScrollView>
+      <View style={styles.container}>
+        {
+          alert !== null && 
+          <AlertProfile alert={alert} onStatusUpdate={onStatusUpdate} />
+        }
 
-      {
-        alert !== null && 
-        <AlertProfile alert={alert} onStatusUpdate={onStatusUpdate} />
-      }
+        {
+          loading && <Loading />
+        }
 
-      {
-        loading && <Loading />
-      }
-
-      {
-        error !== null && 
-        <LoadingError 
-          error={errorMessage(error)}
-          onReloadPress={canLoad}
-          />
-      }
-
-    </View>
+        {
+          error !== null && 
+          <LoadingError 
+            error={errorMessage(error)}
+            onReloadPress={canLoad}
+            />
+        }
+      </View>
+    </ScrollView>
   );
 }
 
