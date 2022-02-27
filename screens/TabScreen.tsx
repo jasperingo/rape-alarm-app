@@ -37,7 +37,8 @@ const TabScreen = () => {
         navigation.replace('SignIn');
       else {
         const unsubscribe = (new AlertRepository()).getNew((alert)=> {
-          sendNotification(alert);
+          if (alert.userId !== user.uid)
+            sendNotification(alert);
         });
 
         return unsubscribe;

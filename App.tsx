@@ -9,6 +9,7 @@ import SplashScreen from './screens/SplashScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import TabScreen, { TabParamList } from './screens/TabScreen';
 import AlertScreen from './screens/AlertScreen';
+import { StatusBar } from 'expo-status-bar';
 
 const Stack = createNativeStackNavigator();
 
@@ -45,6 +46,7 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
+      <StatusBar style="light" />
       <NavigationContainer>
         <Stack.Navigator screenOptions={screenOptions}>
           <Stack.Screen name="Main" component={TabScreen}  />
