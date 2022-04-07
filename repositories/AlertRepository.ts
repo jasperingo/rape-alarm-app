@@ -2,12 +2,9 @@
 import { FirebaseError } from "firebase/app";
 import { 
   child,
-  endBefore,
   get,
   getDatabase, 
-  limitToLast, 
   onChildAdded, 
-  onValue, 
   orderByChild, 
   push, 
   query, 
@@ -16,7 +13,7 @@ import {
   startAt,
   update, 
 } from "firebase/database";
-import { AUTH_USER_NOT_FOUND } from "../constants/errorCodes";
+import { ALERT_NOT_FOUND } from "../constants/errorCodes";
 import Alert from "../models/Alert";
 import app from "./firebase";
 
@@ -48,61 +45,44 @@ export class AlertRepository {
       alert.id = snapshot.key as string;
       return alert;
     } else {
-      throw new FirebaseError(AUTH_USER_NOT_FOUND, '');
+      throw new FirebaseError(ALERT_NOT_FOUND, '');
     }
   }
   
-  async getList(page: string, onResult: (result: Alert[])=> void, onError: (error: Error)=> void) {
+  async getList() {
     
     const db = getDatabase();
-    const alertsRef = page === '' ?
-      query(
-        ref(db, 'alerts'), 
-        orderByChild('date'),
-        limitToLast(2)
-      )
-      :
-      query(
-        ref(db, 'alerts'), 
-        orderByChild('date'), 
-        endBefore(page),
-        limitToLast(2)
-      );
+
+    const alertsQuery = query(ref(db, 'alerts'), orderByChild('date'));
     
-    onValue(
-      alertsRef, 
-      (snapshot) => {
-        const result: Alert[] = [];
-        snapshot.forEach((childSnapshot) => {
-          const childKey = childSnapshot.key;
-          const childData = childSnapshot.val();
-          result.unshift({ ...childData, id: childKey });
-        });
-        onResult(result);
-      }, 
-      onError,
-      {
-        onlyOnce: true
-      }
-    );
+    const snapshot = await get(alertsQuery);
+
+    const result: Alert[] = [];
+
+    snapshot.forEach((childSnapshot) => {
+      const childKey = childSnapshot.key;
+      const childData = childSnapshot.val();
+      result.unshift({ ...childData, id: childKey });
+    });
+      
+    return result;
   }
 
-  getNew(cb: (alert: Alert)=> void) {
+  getCreated(onSuccess: (alert: Alert)=> void, onError: (error: Error)=> void) {
     const db = getDatabase();
     const commentsRef = ref(db, 'alerts/');
     return onChildAdded(
       query(
         commentsRef, 
         orderByChild('date'), 
-        startAt((new Date()).toUTCString())
+        startAt(Date.now())
       ), 
       (data) => {
         const alert = data.val() as Alert;
         alert.id = data.key as string;
-        cb(alert);
-        console.log('----------')
-        console.log(alert);
-      }
+        onSuccess(alert);
+      },
+      onError
     );
   }
 

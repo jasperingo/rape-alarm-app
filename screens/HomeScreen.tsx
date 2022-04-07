@@ -1,89 +1,94 @@
 
-import React, { useEffect, useState } from 'react';
-import { FlatList } from 'react-native';
-import NetInfo from "@react-native-community/netinfo";
-import AlertItem from '../components/AlertItem';
-import { useAlertListFetch } from '../hooks/alertHook';
-import { NO_INTERNET_CONNECTION } from '../constants/errorCodes';
-import Loading from '../components/Loading';
-import LoadingError from '../components/LoadingError';
+import React, { useEffect } from 'react';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import * as Location from 'expo-location';
+import { useAlertCreate } from '../hooks/alertHook';
 import { useErrorMessage } from '../hooks/errorHook';
-import { useRenderListFooter } from '../hooks/renderHook';
-import { useUser } from '../hooks/userHook';
-import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { RootStackParamList } from '../App';
-import LoadingEmpty from '../components/LoadingEmpty';
-import { DIMENSION_XXS } from '../assets/styles/config';
+import { COLOR_ERROR, COLOR_TEXT_INVERSE, DIMENSION_XL } from '../assets/styles/config';
+
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    padding: DIMENSION_XL,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  button: {
+    width: 250,
+    height: 250,
+    borderRadius: 200,
+    backgroundColor: COLOR_ERROR,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+
+  text: {
+    fontSize: 40,
+    color: COLOR_TEXT_INVERSE,
+    fontFamily: 'AkayaTelivigala-Regular'
+  }
+});
 
 
 const HomeScreen = () => {
 
-  const [started, setStarted] = useState(false);
-
-  const user = useUser();
-
-  const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'Main'>>();
-
   const errorMessage = useErrorMessage();
 
-  const renderFooter = useRenderListFooter();
-
   const [
-    list, 
+    onSubmit, 
+    success, 
     loading, 
-    refreshing,
     error, 
-    canLoad, 
-    onError, 
-    onRefresh
-  ] = useAlertListFetch();
+    resetStatus
+  ] = useAlertCreate();
 
   useEffect(
     ()=> {
-      if (user !== null) {
-        NetInfo.fetch().then(state => {
-          setStarted(true);
-          if (!state.isConnected) {
-            onError(NO_INTERNET_CONNECTION);
-          } else {
-            canLoad();
-          }
-        });
-      }
+      if (success)
+        alert('Alert sent');
+
+      if (error !== null)
+        alert(errorMessage(error));
+
+      resetStatus();
     },
-    [user, onError, canLoad]
+    [success, error, resetStatus, errorMessage]
   );
   
+  const sendAlert = async ()=> {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permission to access location was denied');
+      } else {
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+        const [{ city, country, region, subregion }] = await Location.reverseGeocodeAsync({ latitude, longitude });
+        onSubmit(`${city}, ${subregion}, ${region}, ${country}`, longitude, latitude);
+      }
+    } catch {
+      alert('Alert not sent, try again.');
+    }
+  }
+  
   return (
-    <FlatList 
-      data={list}
-      onRefresh={onRefresh}
-      refreshing={refreshing}
-      style={{ paddingTop: DIMENSION_XXS }}
-      renderItem={({ item })=> (
-        <AlertItem 
-          alert={item} 
-          onPress={()=> navigation.navigate('Alert', { id: item.id as string })} 
-          />
-      )}
-      keyExtractor={(item)=> String(item.id)}
-      onEndReached={canLoad}
-      ListFooterComponent={renderFooter([
+    <View style={styles.container}>
+      <TouchableOpacity 
+        style={styles.button} 
+        activeOpacity={0.5} 
+        onPress={sendAlert}
+        disabled={loading}
+        >
         {
-          canRender: loading,
-          render: ()=> <Loading />
-        },
-        {
-          canRender: error !== null,
-          render: ()=> <LoadingError error={errorMessage(error)} onReloadPress={canLoad} />
-        },
-        {
-          canRender: !loading &&  error === null && list.length === 0 && started,
-          render: ()=> <LoadingEmpty text='No alert found' />
+          loading ?
+          <ActivityIndicator size="large" color={COLOR_TEXT_INVERSE} />
+          :
+          <Text style={styles.text}>Send Alert</Text>
         }
-      ])}
-      />
+      </TouchableOpacity>
+    </View>
   );
 }
 

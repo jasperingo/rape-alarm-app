@@ -1,8 +1,7 @@
 import { FirebaseError } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { getAuth, onAuthStateChanged, Unsubscribe } from "firebase/auth";
+import { useState, useMemo, useCallback } from "react";
 import { SIGN_OUT_ERROR, UNKNOWN_ERROR } from "../constants/errorCodes";
-import User from "../models/User";
 import app from "../repositories/firebase";
 import { UserRepository } from "../repositories/UserRepository";
 
@@ -11,6 +10,55 @@ export const useUser = () => {
   const auth = getAuth(app);
   return auth.currentUser;
 }
+
+type UserFetchReturnTuple = [
+  ()=> Unsubscribe,
+  (error: string) => void,
+  boolean, 
+  boolean, 
+  string | null,
+  () => void
+];
+
+export const useAuthUserFetch = (): UserFetchReturnTuple => {
+
+  const [loading, setLoading] = useState(false);
+
+  const [success, setSuccess] = useState(false);
+
+  const [error, setError] = useState<string | null>(null);
+
+  const retryFetch = ()=> setError(null);
+
+  const setPageError = (error: string)=> {
+    setError(error);
+    setLoading(false);
+  }
+
+  const fetchUser = useCallback(
+    () => {
+
+      setError(null);
+      setLoading(true);
+
+      return onAuthStateChanged(
+        getAuth(app), 
+        ()=> {
+          setSuccess(true);
+          setLoading(false);
+        },
+        ()=> { 
+          setLoading(false);
+          setError(UNKNOWN_ERROR);
+        },
+      );
+    },
+    []
+  );
+  
+  return [fetchUser, setPageError, loading, success, error, retryFetch]
+}
+
 
 type SignInReturnTuple = [
   (email: string, password: string)=> Promise<void>,
@@ -147,58 +195,3 @@ export const useUserSignOut = (): SignOutReturnTuple => {
 
   return [onSubmit, success, loading, error, resetStatus];
 }
-
-
-type FetchReturnType = [
-  User | null, 
-  boolean, 
-  string | null, 
-  () => void,
-  (error: string)=> void
-];
-
-export const useUserFetch = (id: string | null): FetchReturnType => {
-  
-  const [user, setUser] = useState<User | null>(null);
-
-  const [loading, setLoading] = useState(false);
-
-  const [error, setError] = useState<string | null>(null);
-
-  const api = useMemo(()=> new UserRepository(), []);
-  
-  const canLoad = useCallback(
-    ()=> { 
-      setError(null);
-      setLoading(true);
-    }, 
-    []
-  );
-  
-  useEffect(
-    () => {
-
-      const fetch = async ()=> {
-        try {
-          if (id !== null) {
-            const user = await api.get(id);
-            setUser(user);
-            setLoading(false);
-          }
-        } catch(error) {
-          setLoading(false);
-          if (error instanceof FirebaseError)
-            setError(error.code);
-          else 
-            setError(UNKNOWN_ERROR);
-        }
-      }
-
-      if (loading) fetch();
-    },
-    [loading, api, id]
-  );
-
-  return [user, loading, error, canLoad, setError];
-}
-

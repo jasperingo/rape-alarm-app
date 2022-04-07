@@ -21,7 +21,5 @@ export const PASSWORD_INVALID = 'PASSWORD_INVALID';
 
 export const SIGN_OUT_ERROR = 'PASSWORD_INVALID';
 
-
-
-
+export const ALERT_NOT_FOUND = 'alert-not-found';
 

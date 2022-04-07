@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import MapView, { Marker } from 'react-native-maps';
-import NetInfo from "@react-native-community/netinfo";
+import { useNetInfo } from "@react-native-community/netinfo";
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import { 
   COLOR_ERROR, 
@@ -16,11 +16,8 @@ import {
   DIMENSION_XXL, 
   FONT_BOLD 
 } from '../assets/styles/config';
-import { useUser, useUserFetch } from '../hooks/userHook';
+import { useUser } from '../hooks/userHook';
 import Alert from '../models/Alert';
-import Loading from './Loading';
-import LoadingError from './LoadingError';
-import { NO_INTERNET_CONNECTION } from '../constants/errorCodes';
 import { useErrorMessage } from '../hooks/errorHook';
 import { useAlertUpdateStatus } from '../hooks/alertHook';
 
@@ -88,19 +85,13 @@ interface Props {
   onStatusUpdate: ()=> void;
 }
 
-const AlertProfile = ({ alert: { id, userId, address, latitude, longitude, status, date }, onStatusUpdate }: Props) => {
+const AlertProfile = ({ alert: { id, userId, userDisplayName, address, latitude, longitude, status, date }, onStatusUpdate }: Props) => {
 
   const userAuth = useUser();
 
-  const errorMessage = useErrorMessage();
+  const network = useNetInfo();
 
-  const [
-    user, 
-    userLoading, 
-    userError, 
-    userCanLoad,
-    userOnError
-  ] = useUserFetch(userId ?? null);
+  const errorMessage = useErrorMessage();
 
   const [
     statusOnSubmit, 
@@ -110,18 +101,6 @@ const AlertProfile = ({ alert: { id, userId, address, latitude, longitude, statu
     statusResetStatus
   ] = useAlertUpdateStatus();
 
-  useEffect(
-    ()=> {
-      NetInfo.fetch().then(state => {
-        if (!state.isConnected) {
-          userOnError(NO_INTERNET_CONNECTION);
-        } else {
-          userCanLoad();
-        }
-      });
-    },
-    [userOnError, userCanLoad]
-  );
 
   useEffect(
     ()=> {
@@ -139,20 +118,18 @@ const AlertProfile = ({ alert: { id, userId, address, latitude, longitude, statu
   );
   
   const deactivate = ()=> {
-    NetInfo.fetch().then(state => {
-      if (!state.isConnected) {
-        alert('No network connection');
-      } else {
-        statusOnSubmit({ id, userId, address, latitude, longitude, status, date });
-      }
-    });
+    if (!network.isConnected) {
+      alert('No network connection');
+    } else {
+      statusOnSubmit({ id, userId, userDisplayName, address, latitude, longitude, status, date });
+    }
   }
   
   return (
     <View>
       <Text style={styles.address}>{ address }</Text>
       <Text style={styles.location}>Latitude: {latitude} - Longitude: {longitude}</Text>
-      <Text style={styles.date}>{ date }</Text>
+      <Text style={styles.date}>{ (new Date(date)).toUTCString() }</Text>
       <View style={styles.statusContainer}>
         <View style={styles.status}>
           <Ionicons 
@@ -162,6 +139,7 @@ const AlertProfile = ({ alert: { id, userId, address, latitude, longitude, statu
             />
           <Text style={status === 'Active' ? styles.statusTextActive : styles.statusTextInActive}>{ status }</Text>
         </View>
+        
         {
           (status === 'Active' && userId === userAuth?.uid) &&
           <TouchableOpacity activeOpacity={0.7} onPress={deactivate}>
@@ -175,46 +153,30 @@ const AlertProfile = ({ alert: { id, userId, address, latitude, longitude, statu
         }
       </View>
       
-      {
-        user !== null && 
-        <>
-          <View style={styles.userContainer}>
-            <Ionicons 
-              name='person' 
-              size={DIMENSION_XL} 
-              color={COLOR_PRIMARY} 
-              />
-            <Text>{ user.fullName }</Text>
-          </View>
-          <MapView 
-            style={styles.map} 
-            initialRegion={{
-              latitude,
-              longitude,
-              latitudeDelta: 0.0922,
-              longitudeDelta: 0.0421,
-            }}
-            >
-              <Marker
-                coordinate={{ latitude, longitude }}
-                title={"Location of victim or incdent"}
-                />
-          </MapView>
-        </>
-      }
-
-      {
-        userLoading && <Loading />
-      }
-
-      {
-        userError !== null && 
-        <LoadingError 
-          error={errorMessage(userError)}
-          onReloadPress={userCanLoad}
+      <View style={styles.userContainer}>
+        <Ionicons 
+          name='person' 
+          size={DIMENSION_XL} 
+          color={COLOR_PRIMARY} 
           />
-      }
+        <Text>{ userDisplayName }</Text>
+      </View>
 
+      <MapView 
+        style={styles.map} 
+        initialRegion={{
+          latitude,
+          longitude,
+          latitudeDelta: 0.0922,
+          longitudeDelta: 0.0421,
+        }}
+        >
+          <Marker
+            coordinate={{ latitude, longitude }}
+            title={"Location of victim or incdent"}
+            />
+      </MapView>
+      
     </View>
   );
 }

@@ -18,8 +18,8 @@ Notifications.setNotificationHandler({
 async function schedulePushNotification(alert: Alert) {
   await Notifications.scheduleNotificationAsync({
     content: {
-      title: 'Someone just raised an alarm',
-      body: 'Hurray and help if you can',
+      title: `${alert.userDisplayName} just raised an alarm`,
+      body: 'Please try and help, if you can',
       data: { id: alert.id },
     },
     trigger: { seconds: 1 },

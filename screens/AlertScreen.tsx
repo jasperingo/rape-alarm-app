@@ -1,7 +1,7 @@
 
 import React, { useEffect } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import NetInfo from "@react-native-community/netinfo";
+import { useNetInfo } from "@react-native-community/netinfo";
 import { useAlertFetch } from '../hooks/alertHook';
 import LoadingError from '../components/LoadingError';
 import Loading from '../components/Loading';
@@ -22,28 +22,29 @@ export type ParamList = {
 
 const AlertScreen = () => {
 
+  const network = useNetInfo();
+
   const errorMessage = useErrorMessage();
 
   const [
+    fetchAlert, 
     alert, 
     loading, 
     error, 
-    canLoad, 
-    onError, 
-    onStatusUpdate
+    setError, 
+    onStatusUpdate, 
+    retryFetch
   ] = useAlertFetch();
 
   useEffect(
     ()=> {
-      NetInfo.fetch().then(state => {
-        if (!state.isConnected) {
-          onError(NO_INTERNET_CONNECTION);
-        } else {
-          canLoad();
-        }
-      });
+      if (!network.isConnected && alert === null && error === null) {
+        setError(NO_INTERNET_CONNECTION);
+      } else if (network.isConnected && alert === null && !loading) {
+        fetchAlert();
+      }
     },
-    [onError, canLoad]
+    [network.isConnected, loading, alert, error, setError, fetchAlert]
   );
 
   return (
@@ -62,7 +63,7 @@ const AlertScreen = () => {
           error !== null && 
           <LoadingError 
             error={errorMessage(error)}
-            onReloadPress={canLoad}
+            onReloadPress={retryFetch}
             />
         }
       </View>

@@ -1,7 +1,6 @@
 
 import React, { useEffect } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
-import NetInfo from "@react-native-community/netinfo";
 import { 
   COLOR_PRIMARY, 
   DIMENSION_LG, 
@@ -14,13 +13,10 @@ import {
 } from '../assets/styles/config';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 import AppButton from '../components/AppButton';
-import { useUser, useUserFetch, useUserSignOut } from '../hooks/userHook';
+import { useUser, useUserSignOut } from '../hooks/userHook';
 import { useNavigation } from '@react-navigation/native';
 import { useErrorMessage } from '../hooks/errorHook';
 import { NavigationOnTabProp } from './TabScreen';
-import Loading from '../components/Loading';
-import LoadingError from '../components/LoadingError';
-import { NO_INTERNET_CONNECTION } from '../constants/errorCodes';
 import { User } from 'firebase/auth';
 
 const styles = StyleSheet.create({
@@ -68,9 +64,7 @@ const ProfileScreen = () => {
     resetStatus
   ] = useUserSignOut();
 
-  const userAuth = useUser() as User;
-
-  const [user, loading, error, canLoad, onError] = useUserFetch(userAuth?.uid);
+  const user = useUser() as User;
 
   useEffect(
     ()=> {
@@ -89,51 +83,17 @@ const ProfileScreen = () => {
     [signOutSuccess, signOutError, navigation, resetStatus, errorMessage]
   );
   
-  useEffect(
-    ()=> {
-      if (userAuth !== null) {
-        NetInfo.fetch().then(state => {
-          if (!state.isConnected) {
-            onError(NO_INTERNET_CONNECTION);
-          } else {
-            canLoad();
-          }
-        });
-      }
-    },
-    [userAuth, canLoad, onError]
-  );
-  
   return (
     <View style={styles.container}>
+      
+      <Text style={styles.name}>{ user.displayName }</Text>
 
-      {
-        user !== null && 
-        <>
-          <Ionicons name='person-outline' size={100} color={COLOR_PRIMARY} style={styles.icon} />
-          
-          <Text style={styles.name}>Welcome, { user.fullName }</Text>
+      <View style={styles.emailContainer}>
+        <Ionicons name='mail' size={DIMENSION_XXXL} color={COLOR_PRIMARY} />
+        <Text style={styles.email}>{ user.email }</Text>
+      </View>
 
-          <View style={styles.emailContainer}>
-            <Ionicons name='mail' size={DIMENSION_XXXL} color={COLOR_PRIMARY} />
-            <Text style={styles.email}>{ user.email }</Text>
-          </View>
-
-          <AppButton loading={signOutLoading} text="Sign out" onPress={onSignOut} />
-        </>
-      }
-
-      {
-        loading && <Loading />
-      }
-
-      {
-        error !== null && 
-        <LoadingError 
-          error={errorMessage(error)}
-          onReloadPress={canLoad}
-          />
-      }
+      <AppButton loading={signOutLoading} text="Sign out" onPress={onSignOut} />
 
     </View>
   );

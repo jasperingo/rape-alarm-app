@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { COLOR_PRIMARY, COLOR_TEXT_INVERSE, DIMENSION_MD, DIMENSION_SM, DIMENSION_XS, DIMENSION_XXS, FONT_BOLD } from '../assets/styles/config';
+import { COLOR_PRIMARY, COLOR_TEXT_INVERSE, DIMENSION_MD, DIMENSION_XXS, FONT_BOLD } from '../assets/styles/config';
 
 const styles = StyleSheet.create({
   container: {
@@ -33,7 +33,7 @@ const AppButton = ({ text, loading, onPress }: Props) => {
         <Text style={styles.text}>{ text }</Text>
       }
     </TouchableOpacity>
-  )
+  );
 }
 
 export default AppButton;

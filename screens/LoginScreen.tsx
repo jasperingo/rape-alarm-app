@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import NetInfo from "@react-native-community/netinfo";
+import { useNetInfo } from "@react-native-community/netinfo";
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import validator from 'validator';
 import { DIMENSION_MD } from '../assets/styles/config';
@@ -24,6 +24,8 @@ const styles = StyleSheet.create({
 
 const LoginScreen = () => {
 
+  const network = useNetInfo();
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'SignIn'>>();
 
   const errorMessage = useErrorMessage();
@@ -39,13 +41,11 @@ const LoginScreen = () => {
     if (!validator.isEmail(email) || !validator.isLength(password, { min: 4 })) {
       alert('Credentials incorrect');
     } else {
-      NetInfo.fetch().then(state => {
-        if (!state.isConnected) {
-          alert('No network connection');
-        } else {
-          onSubmit(email, password);
-        }
-      });
+      if (!network.isConnected) {
+        alert('No network connection');
+      } else {
+        onSubmit(email, password);
+      }
     }
   }
 

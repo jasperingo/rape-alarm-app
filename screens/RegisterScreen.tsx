@@ -3,7 +3,7 @@ import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import React, { useEffect, useState } from 'react';
 import { KeyboardAvoidingView, Platform, StyleSheet, View } from 'react-native';
-import NetInfo from "@react-native-community/netinfo";
+import { useNetInfo } from "@react-native-community/netinfo";
 import { RootStackParamList } from '../App';
 import { DIMENSION_MD } from '../assets/styles/config';
 import AppButton from '../components/AppButton';
@@ -24,10 +24,12 @@ const styles = StyleSheet.create({
 
 const RegisterScreen = () => {
 
+  const network = useNetInfo();
+
   const navigation = useNavigation<NativeStackNavigationProp<RootStackParamList, 'SignUp'>>();
 
   const [
-    validator,
+    isInvalid,
     nameError, 
     emailError, 
     passwordError
@@ -45,16 +47,14 @@ const RegisterScreen = () => {
 
   const onFormSubmit = () => {
 
-    const error = validator(name, email, password);
+    if (isInvalid(name, email, password)) {
+      return;
+    }
     
-    if (!error) {
-      NetInfo.fetch().then(state => {
-        if (!state.isConnected) {
-          alert('No network connection');
-        } else {
-          onSubmit(name, email, password);
-        }
-      });
+    if (!network.isConnected) {
+      alert('No network connection');
+    } else {
+      onSubmit(name, email, password);
     }
   }
 

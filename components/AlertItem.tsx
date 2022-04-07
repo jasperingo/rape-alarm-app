@@ -49,7 +49,7 @@ const AlertItem = ({ alert: { date, status, address }, onPress }: { alert: Alert
     <View style={styles.container}>
       <TouchableOpacity activeOpacity={0.5} onPress={onPress}>
         <Text style={styles.location}>{ address }</Text>
-        <Text style={styles.date}>{ date }</Text>
+        <Text style={styles.date}>{ (new Date(date)).toUTCString() }</Text>
         <View style={styles.status}>
           <Ionicons 
             size={DIMENSION_MD} 

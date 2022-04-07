@@ -1,12 +1,12 @@
 import { RouteProp, useRoute } from "@react-navigation/native";
 import { FirebaseError } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { User } from "firebase/auth";
+import { useCallback, useMemo, useState } from "react";
 import { UNKNOWN_ERROR } from "../constants/errorCodes";
 import Alert from "../models/Alert";
 import { AlertRepository } from "../repositories/AlertRepository";
-import app from "../repositories/firebase";
 import { ParamList } from "../screens/AlertScreen";
+import { useUser } from "./userHook";
 
 
 type CreateReturnTuple = [
@@ -27,7 +27,7 @@ export const useAlertCreate = (): CreateReturnTuple => {
 
   const api = useMemo(()=> new AlertRepository(), []);
 
-  const auth = useMemo(()=> getAuth(app), []);
+  const user = useUser() as User;
 
   const resetStatus = useCallback(
     ()=> {
@@ -42,23 +42,20 @@ export const useAlertCreate = (): CreateReturnTuple => {
     setLoading(true);
 
     try {
-      if (auth.currentUser !== null) {
-        await api.create({
-          address,
-          latitude,
-          longitude,
-          status: 'Active',
-          userId: auth.currentUser.uid,
-          date: new Date().toUTCString(),
-        });
+      await api.create({
+        address,
+        latitude,
+        longitude,
+        status: 'Active',
+        date: Date.now(),
+        userId: user.uid,
+        userDisplayName: user.displayName as string,
+      });
 
-        setSuccess(true);
-      }
+      setSuccess(true);
+
     } catch (error) {
-      if (error instanceof FirebaseError)
-        setError(error.code);
-      else 
-        setError(UNKNOWN_ERROR);
+      setError(error instanceof FirebaseError ? error.code : UNKNOWN_ERROR);
     } finally {
       setLoading(false);
     }
@@ -86,8 +83,6 @@ export const useAlertUpdateStatus = (): UpdateReturnTuple => {
 
   const api = useMemo(()=> new AlertRepository(), []);
 
-  const auth = useMemo(()=> getAuth(app), []);
-
   const resetStatus = useCallback(
     ()=> {
       setError(null);
@@ -98,19 +93,15 @@ export const useAlertUpdateStatus = (): UpdateReturnTuple => {
 
   const onSubmit = async (alert: Alert) => {
 
+    setError(null);
     setLoading(true);
 
     try {
-      if (auth.currentUser !== null) {
-        alert.status = 'Inactive';
-        await api.updateStatus(alert);
-        setSuccess(true);
-      }
+      alert.status = 'Inactive';
+      await api.updateStatus(alert);
+      setSuccess(true);
     } catch (error) {
-      if (error instanceof FirebaseError)
-        setError(error.code);
-      else 
-        setError(UNKNOWN_ERROR);
+      setError(error instanceof FirebaseError ? error.code : UNKNOWN_ERROR);
     } finally {
       setLoading(false);
     }
@@ -121,12 +112,14 @@ export const useAlertUpdateStatus = (): UpdateReturnTuple => {
 
 
 type ListFetchReturnType = [
+  () => Promise<void>,
   Alert[], 
   boolean, 
   boolean,
-  string | null, 
-  () => void,
+  boolean,
+  string | null,
   (error: string)=> void,
+  ()=> void,
   ()=> void
 ];
 
@@ -134,78 +127,59 @@ export const useAlertListFetch = (): ListFetchReturnType => {
   
   const [list, setList] = useState<Alert[]>([]);
 
-  const [ended, setEnded] = useState(false);
+  const [loaded, setLoaded] = useState(false);
 
   const [loading, setLoading] = useState(false);
 
   const [refreshing, setRefreshing] = useState(false);
 
-  const [page, setPage] = useState('');
-
   const [error, setError] = useState<string | null>(null);
 
   const api = useMemo(()=> new AlertRepository(), []);
-  
-  const canLoad = useCallback(
-    ()=> { 
-      setError(null);
-      if (!ended)
-        setLoading(true);  
-    }, 
-    [ended]
-  );
 
-  const onRefresh = useCallback(
-    ()=> { 
-      setPage('');
-      setList([]);
-      setError(null);
-      setEnded(false);
-      setRefreshing(true);
-      setLoading(true); 
-    }, 
-    []
-  );
-  
-  useEffect(
-    () => {
+  const onRefresh = ()=> { 
+    setList([]);
+    setError(null);
+    setLoaded(false);
+    setRefreshing(true);
+  };
 
-      const fetch = ()=> {
-        api.getList(
-          page,
-          (result)=> {
-            setLoading(false);
-            setRefreshing(false);
-            setList((old)=> old.concat(result));
-            setPage(result[result.length-1]?.date);
-            setEnded(result.length === 0);
-          },
-          (error)=> {
-            setLoading(false);
-            setRefreshing(false);
-            if (error instanceof FirebaseError)
-              setError(error.code);
-            else 
-              setError(UNKNOWN_ERROR);
-          }
-        );
+  const retryFetch = ()=> setError(null);
+
+  const fetchAlerts = useCallback(
+    async () => {
+
+      setError(null);
+      setLoading(true);
+      setRefreshing(false);
+
+      try {
+
+        const response = await api.getList();
+        
+        setLoaded(true);
+        setLoading(false);
+        setList(response);
+
+      } catch (error) {
+        setLoading(false);
+        setError(error instanceof FirebaseError ? error.code : UNKNOWN_ERROR);
       }
-
-      if (loading && !ended) fetch();
     },
-    [loading, ended, page, api]
+    [api]
   );
   
-  return [list, loading, refreshing, error, canLoad, setError, onRefresh];
+  return [fetchAlerts, list, loading, loaded, refreshing, error, setError, onRefresh, retryFetch];
 }
 
 
 type FetchReturnType = [
+  () => Promise<void>,
   Alert | null, 
   boolean, 
-  string | null, 
-  () => void,
+  string | null,
   (error: string)=> void,
+  () => void,
   () => void
 ];
 
@@ -220,47 +194,28 @@ export const useAlertFetch = (): FetchReturnType => {
   const [error, setError] = useState<string | null>(null);
 
   const api = useMemo(()=> new AlertRepository(), []);
-
-  const auth = useMemo(()=> getAuth(app), []);
   
-  const canLoad = useCallback(
-    ()=> { 
+  const retryFetch = ()=> setError(null);
+
+  const onStatusUpdate = useCallback(()=> setAlert(old=> old !== null ? ({ ...old, status: 'Inactive' }) : null), []);
+  
+  const fetchAlert = useCallback(
+    async ()=> {
+
       setError(null);
       setLoading(true);
-    }, 
-    []
-  );
 
-  const onStatusUpdate = useCallback(
-    ()=> {
-      setAlert(old=> old !== null ? ({ ...old, status: 'Inactive' }) : null);
-    },
-    []
-  );
-  
-  useEffect(
-    () => {
-
-      const fetch = async ()=> {
-        try {
-          if (auth.currentUser !== null) {
-            const alert = await api.get(route.params.id);
-            setAlert(alert);
-            setLoading(false);
-          }
-        } catch(error) {
-          setLoading(false);
-          if (error instanceof FirebaseError)
-            setError(error.code);
-          else 
-            setError(UNKNOWN_ERROR);
-        }
+      try {
+        const alert = await api.get(route.params.id);
+        setAlert(alert);
+      } catch(error) {
+        setError(error instanceof FirebaseError ? error.code : UNKNOWN_ERROR);
+      } finally {
+        setLoading(false);
       }
-
-      if (loading) fetch();
     },
-    [loading, route.params.id, api, auth.currentUser]
+    [route.params.id, api]
   );
 
-  return [alert, loading, error, canLoad, setError, onStatusUpdate];
+  return [fetchAlert, alert, loading, error, setError, onStatusUpdate, retryFetch];
 }
