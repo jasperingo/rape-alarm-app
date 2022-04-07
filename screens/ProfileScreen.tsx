@@ -82,6 +82,8 @@ const ProfileScreen = () => {
     },
     [signOutSuccess, signOutError, navigation, resetStatus, errorMessage]
   );
+
+  if (user === null) return null;
   
   return (
     <View style={styles.container}>
